@@ -37,6 +37,7 @@ export default function App() {
   const [inputValue, setInputValue] = useState('');
   const [linkingFrom, setLinkingFrom] = useState<string | null>(null);
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -261,6 +262,7 @@ export default function App() {
         {/* Left Column: Canvas */}
         <div 
           ref={canvasRef}
+          onClick={() => setSelectedNodeId(null)}
           className="flex-1 relative grid-bg overflow-hidden cursor-crosshair bg-slate-900 min-h-[50vh] lg:min-h-0"
         >
           {/* SVG Overlay for Connections */}
@@ -297,9 +299,19 @@ export default function App() {
             >
               {/* Node Main Shape */}
               <div
-                onMouseDown={() => handleStartDrag(node.id)}
-                onTouchStart={() => handleStartDrag(node.id)}
-                className={`w-32 h-32 scale-75 lg:scale-100 flex items-center justify-center relative transition-transform cursor-grab active:cursor-grabbing touch-none`}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  handleStartDrag(node.id);
+                  setSelectedNodeId(node.id);
+                }}
+                onTouchStart={(e) => {
+                  // Don't stop propagation here to allow potential other listeners, but we need to track if it's a drag or a tap
+                  handleStartDrag(node.id);
+                  setSelectedNodeId(node.id);
+                }}
+                className={`w-32 h-32 scale-75 lg:scale-100 flex items-center justify-center relative transition-transform cursor-grab active:cursor-grabbing touch-none ${
+                  selectedNodeId === node.id ? 'ring-2 ring-indigo-400 ring-offset-4 ring-offset-slate-900 rounded-full' : ''
+                }`}
               >
                 <svg viewBox="0 0 100 86.6" className="hexagon-svg" style={{ fill: `var(--color-${node.color.split('-')[1]}-${node.color.split('-')[2]})` }}>
                   <polygon points="25,0 75,0 100,43.3 75,86.6 25,86.6 0,43.3" />
@@ -309,14 +321,19 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Hover Actions */}
+              {/* Hover/Select Actions */}
               {!isExporting && (
                 <div 
-                  className="absolute -top-2 -right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all z-30"
+                  className={`absolute -top-2 -right-2 flex flex-col gap-1 transition-all z-30 ${
+                    selectedNodeId === node.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90 lg:group-hover:opacity-100 lg:group-hover:scale-100'
+                  }`}
                   data-html2canvas-ignore="true"
                 >
                   <button
-                    onClick={() => handleLinkAction(node.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLinkAction(node.id);
+                    }}
                     title="Link"
                     className={`w-6 h-6 rounded-full flex items-center justify-center transition-all safe-shadow-lg text-[10px] ${
                       linkingFrom === node.id ? 'bg-amber-500 scale-110' : 'bg-indigo-500 hover:bg-indigo-400'
@@ -325,7 +342,10 @@ export default function App() {
                     🔗
                   </button>
                   <button
-                    onClick={() => deleteNode(node.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteNode(node.id);
+                    }}
                     title="Delete"
                     className="w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center transition-all safe-shadow-lg text-[10px] border border-white-20"
                   >

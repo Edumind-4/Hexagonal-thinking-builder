@@ -35,6 +35,7 @@ export default function App() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [topicValue, setTopicValue] = useState('');
   const [linkingFrom, setLinkingFrom] = useState<string | null>(null);
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -230,21 +231,30 @@ export default function App() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <form onSubmit={addNode} className="flex flex-1 lg:flex-none" data-html2canvas-ignore="true">
+          <div className="flex flex-col lg:flex-row gap-2 flex-1 lg:flex-none" data-html2canvas-ignore="true">
             <input
               type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Add concept..."
-              className="bg-slate-700 border border-slate-600 rounded-l py-1.5 lg:py-2 px-3 lg:px-4 text-xs lg:text-sm flex-1 lg:w-48 outline-none focus:ring-1 ring-indigo-400 text-white placeholder:text-slate-500"
+              value={topicValue}
+              onChange={(e) => setTopicValue(e.target.value)}
+              placeholder="Map Topic (e.g. Climate Change)"
+              className="bg-slate-700/50 border border-slate-600/50 rounded py-1.5 lg:py-2 px-3 lg:px-4 text-xs lg:text-sm lg:w-64 outline-none focus:ring-1 ring-emerald-400 text-white placeholder:text-slate-500 font-medium"
             />
-            <button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 lg:px-4 py-1.5 lg:py-2 rounded-r text-xs lg:text-sm font-semibold transition-colors whitespace-nowrap"
-            >
-              Add Node
-            </button>
-          </form>
+            <form onSubmit={addNode} className="flex">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Add concept..."
+                className="bg-slate-700 border border-slate-600 rounded-l py-1.5 lg:py-2 px-3 lg:px-4 text-xs lg:text-sm flex-1 lg:w-48 outline-none focus:ring-1 ring-indigo-400 text-white placeholder:text-slate-500"
+              />
+              <button
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 lg:px-4 py-1.5 lg:py-2 rounded-r text-xs lg:text-sm font-semibold transition-colors whitespace-nowrap"
+              >
+                Add Node
+              </button>
+            </form>
+          </div>
 
           <button
             onClick={exportImage}
@@ -265,6 +275,16 @@ export default function App() {
           onClick={() => setSelectedNodeId(null)}
           className="flex-1 relative grid-bg overflow-hidden cursor-crosshair bg-slate-900 min-h-[50vh] lg:min-h-0"
         >
+          {/* Topic Display Overlay */}
+          {topicValue && (
+            <div className="absolute top-6 left-6 z-0 pointer-events-none">
+              <h2 className="text-2xl lg:text-4xl font-black text-white/20 uppercase tracking-tighter leading-tight max-w-2xl">
+                {topicValue}
+              </h2>
+              <div className="h-1 w-24 bg-indigo-500/20 mt-2 rounded"></div>
+            </div>
+          )}
+
           {/* SVG Overlay for Connections */}
           <svg className="absolute inset-0 pointer-events-none w-full h-full">
             {links.map((link) => {

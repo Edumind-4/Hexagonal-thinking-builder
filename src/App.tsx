@@ -98,17 +98,25 @@ export default function App() {
   };
 
   // Dragging logic
-  const handleMouseDown = (id: string) => {
+  const handleStartDrag = (id: string) => {
     setDraggingNodeId(id);
   };
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!draggingNodeId || !canvasRef.current) return;
+      
+      // Prevent scrolling when dragging on touch devices
+      if ('touches' in e) {
+        if (e.cancelable) e.preventDefault();
+      }
 
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left - HEX_WIDTH / 2;
-      const y = e.clientY - rect.top - HEX_HEIGHT / 2;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+      const x = clientX - rect.left - HEX_WIDTH / 2;
+      const y = clientY - rect.top - HEX_HEIGHT / 2;
 
       setNodes(prev =>
         prev.map(n =>
@@ -123,18 +131,22 @@ export default function App() {
       );
     };
 
-    const handleMouseUp = () => {
+    const handleEndDrag = () => {
       setDraggingNodeId(null);
     };
 
     if (draggingNodeId) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEndDrag);
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleEndDrag);
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEndDrag);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEndDrag);
     };
   }, [draggingNodeId]);
 
@@ -285,8 +297,9 @@ export default function App() {
             >
               {/* Node Main Shape */}
               <div
-                onMouseDown={() => handleMouseDown(node.id)}
-                className={`w-32 h-32 scale-75 lg:scale-100 flex items-center justify-center relative transition-transform cursor-grab active:cursor-grabbing`}
+                onMouseDown={() => handleStartDrag(node.id)}
+                onTouchStart={() => handleStartDrag(node.id)}
+                className={`w-32 h-32 scale-75 lg:scale-100 flex items-center justify-center relative transition-transform cursor-grab active:cursor-grabbing touch-none`}
               >
                 <svg viewBox="0 0 100 86.6" className="hexagon-svg" style={{ fill: `var(--color-${node.color.split('-')[1]}-${node.color.split('-')[2]})` }}>
                   <polygon points="25,0 75,0 100,43.3 75,86.6 25,86.6 0,43.3" />
